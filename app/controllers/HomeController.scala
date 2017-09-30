@@ -31,9 +31,18 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
     Ok(views.html.index())
   }
   
+  /**
+   * A JSON document that lists interesting statistics from Redis to show that everything is working.
+   */
   def status() = Action.async { implicit request: Request[AnyContent] =>
-    store.countMeasurements().map { count => 
-      Ok(Json.obj("measurementCount" -> count))
+    val deviceIdsF = store.uniqueDeviceIds
+    val keysF = store.countKeys
+    
+    for(deviceIds <- deviceIdsF;
+        keys <- keysF) yield {
+      Ok(Json.obj(
+          "keys" -> keys,
+          "deviceIds" -> Json.arr(deviceIds)))
     }
   }
   

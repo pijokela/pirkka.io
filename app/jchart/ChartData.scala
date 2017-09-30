@@ -44,7 +44,7 @@ class ChartData @Inject()(val configuration: Configuration) {
   
   def dailyMinsAndMaxes(start: DateTime, end: DateTime, data : Seq[(String, Seq[Measurement])]): JsObject = {
     val labels = Labels.forTimeAndGrouping(DailyGrouping, start, end)
-    Logger.info(s"Finding mins and maxes $labels from data.size: ${data.size} and data.head._2.size: ${data.head._2.size}")
+    // Logger.info(s"Finding mins and maxes $labels from data.size: ${data.size} and data.head._2.size: ${data.head._2.size}")
     val groupedData = data.flatMap { case (deviceId, data) => 
       (deviceId + ".max", findDailyMaximums(data).map(_._2)) ::
       (deviceId + ".min", findDailyMinimums(data).map(_._2)) :: Nil
@@ -54,7 +54,7 @@ class ChartData @Inject()(val configuration: Configuration) {
     // Filter labels that do not have data in the first dataset:
     val labelsWithData = labels.filter { l => dataDates.contains(l.date) }
     
-    Logger.info(s"Found ${labelsWithData.size} labels and ${groupedData.head._2.size} data points.")
+    // Logger.info(s"Found ${labelsWithData.size} labels and ${groupedData.head._2.size} data points.")
     createJsonFromDataByDevice(labelsWithData.map(_.label), groupedData)
   }
   
@@ -64,7 +64,7 @@ class ChartData @Inject()(val configuration: Configuration) {
                        grouping: Grouping): JsObject = 
   {
     val labels = Labels.forTimeAndGrouping(grouping, start, end)
-    Logger.info(s"Grouping is ${grouping.name} --> $labels from data.size: ${data.size}")
+    // Logger.info(s"Grouping is ${grouping.name} --> $labels from data.size: ${data.size}")
     val groupedData = data.flatMap { case (deviceId, data) => 
       Labels.findDataFor(labels, data)
     }
@@ -103,12 +103,12 @@ class ChartData @Inject()(val configuration: Configuration) {
       val deviceLabel = configuration.get[Option[String]](s"deviceId.$deviceId.label").getOrElse(deviceId)
       val json = Json.obj(
         "label" -> deviceLabel,
-        "fillColor" -> color(index, 0.2),
-        "strokeColor" -> color(index, 1),
+        "backgroundColor" -> color(index, 0.2),
+        "borderColor" -> color(index, 1),
         "pointColor" -> color(index, 1),
-        "pointStrokeColor" -> "#fff",
-        "pointHighlightFill" -> "#fff",
-        "pointHighlightStroke" -> color(index, 1),
+        //"pointStrokeColor" -> "#fff",
+        //"pointHighlightFill" -> "#fff",
+        //"pointHighlightStroke" -> color(index, 1),
         "data" -> datasetDataArray
       )
       nextIndex()

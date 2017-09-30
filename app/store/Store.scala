@@ -42,7 +42,7 @@ class Store @Inject()(configuration: Configuration) {
     }
   }
   
-  def countMeasurements(): Future[Long] =
+  def countKeys(): Future[Long] =
     redis.keys("*").map(_.size)
   
   def listMeasurements(unit: String, start: DateTime, end: DateTime): Future[List[Measurement]] = {
@@ -67,7 +67,7 @@ class Store @Inject()(configuration: Configuration) {
   /**
    * @return The device ids found from the array.
    */
-  private def uniqueDeviceIds: Future[List[String]] =
+  def uniqueDeviceIds: Future[List[String]] =
     redis.smembers[String]("deviceIds").map(_.toList)
     
   private def deviceMeasurements(unit: String, deviceId: String, start: DateTime, end: DateTime): Future[List[Measurement]] = {

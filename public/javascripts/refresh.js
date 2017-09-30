@@ -1,12 +1,49 @@
-_charts = [];
+temperature_chart = null;
 
 function createChart(data, chartNumber, scaleLabel) {
-  var chart = _charts[chartNumber]
-  if (chart != null) {
-	  chart.destroy();
+  var config = {
+	  type: 'line',
+	  data: data,
+	  options: {
+	      responsive: true,
+	      title:{
+	          display:true,
+	          text:'Temperature'
+	      },
+	      tooltips: {
+	          mode: 'index',
+	          intersect: false,
+	      },
+	      hover: {
+	          mode: 'nearest',
+	          intersect: true
+	      },
+	      scales: {
+	          xAxes: [{
+	              display: true,
+	              scaleLabel: {
+	                  display: true,
+	                  labelString: 'Time'
+	              }
+	          }],
+	          yAxes: [{
+	              display: true,
+	              scaleLabel: {
+	                  display: true,
+	                  labelString: 'Temperature'
+	              }
+	          }]
+	      }
+	  }		  
+  };
+  
+  if (temperature_chart != null) {
+	  temperature_chart.destroy();
   }
+  
   var ctx = document.getElementById("chart"+chartNumber).getContext("2d");
-  _charts[chartNumber] = new Chart(ctx).Line(data, {'scaleLabel': scaleLabel, 'scaleGridLineColor': 'rgba(100, 100, 100, .2)'});
+  console.log("Creating chart");
+  temperature_chart = new Chart(ctx, config);
 }
 
 Chart.defaults.global.animation = false;
