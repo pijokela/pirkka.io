@@ -29,8 +29,10 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
     Ok(views.html.index())
   }
   
-  def measurements() = Action { implicit request: Request[AnyContent] =>
-    Ok(JsArray(measurementsReceived))
+  def status() = Action.async { implicit request: Request[AnyContent] =>
+    store.countMeasurements().map { count => 
+      Ok(Json.obj("measurementCount" -> count))
+    }
   }
   
   def postMeasurements() = Action.async { implicit request: Request[AnyContent] =>
@@ -38,7 +40,6 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
     jsonOpt.map { json => 
       val array = json.as[JsArray]
       store.storeMeasurements(array).map { _ =>
-        measurementsReceived = measurementsReceived ++ array.value
         Ok(Json.obj())
       }
     }
@@ -59,9 +60,8 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
     Logger.info("Got start and end: " + start + " " + end)
     
     val resultsF = validType match {
-      case "pressure" => ??? // pressureDao.list(start, end).map(_.map(_.toMeasurement))
-      case "temperature" => store.listMeasurements(start, end)
-      case _ => store.listMeasurements(start, end)
+      case "pressure" => store.listMeasurements("Pa", start, end)
+      case _ => store.listMeasurements("milliC", start, end) // temperature
     }
     
     resultsF.map { temperatures => 
@@ -74,6 +74,4 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
       Ok(data)
     }
   }
-  
-  var measurementsReceived: List[JsValue] = Nil
 }

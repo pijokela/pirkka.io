@@ -42,10 +42,13 @@ class Store @Inject()(configuration: Configuration) {
     }
   }
   
-  def listMeasurements(start: DateTime, end: DateTime): Future[List[Measurement]] = {
+  def countMeasurements(): Future[Long] =
+    redis.keys("*").map(_.size)
+  
+  def listMeasurements(unit: String, start: DateTime, end: DateTime): Future[List[Measurement]] = {
     uniqueDeviceIds.flatMap { deviceIds =>
       sequence(deviceIds.map { deviceId =>
-        deviceMeasurements(deviceId, start, end)
+        deviceMeasurements(unit, deviceId, start, end)
       }).map(_.flatten)
     }
   }
@@ -67,13 +70,13 @@ class Store @Inject()(configuration: Configuration) {
   private def uniqueDeviceIds: Future[List[String]] =
     redis.smembers[String]("deviceIds").map(_.toList)
     
-  private def deviceMeasurements(deviceId: String, start: DateTime, end: DateTime): Future[List[Measurement]] = {
+  private def deviceMeasurements(unit: String, deviceId: String, start: DateTime, end: DateTime): Future[List[Measurement]] = {
     val startMonth = start.toLocalDate().withDayOfMonth(1)
     val endMonth = end.toLocalDate().plusMonths(1).withDayOfMonth(1)
     val months = monthsTo(startMonth, endMonth)
     
     sequence(months.map(month => 
-      deviceMeasurementsForMonth(deviceId, month.getYear, month.getMonthOfYear)))
+      deviceMeasurementsForMonth(unit, deviceId, month.getYear, month.getMonthOfYear)))
         .map(_.flatten
               .map(Measurement(_))
               .filter(m => m.date.isBefore(end) && m.date.isAfter(start)))
@@ -82,8 +85,9 @@ class Store @Inject()(configuration: Configuration) {
   private def monthsTo(from: LocalDate, to: LocalDate): List[LocalDate] =
     if (from.isBefore(to)) { from :: monthsTo(from.plusMonths(1), to) } else Nil
   
-  private def deviceMeasurementsForMonth(deviceId: String, year: Int, month: Int): Future[List[JsObject]] =
-    redis.hvals[String](s"measurementDetails-$deviceId-$year-$month")
+  
+  private def deviceMeasurementsForMonth(unit: String, deviceId: String, year: Int, month: Int): Future[List[JsObject]] =
+    redis.hvals[String](s"measurementDetails-$unit-$deviceId-$year-$month")
       .map(_.map(s => Json.parse(s).as[JsObject]).toList)
   
   private def storeMeasurement(json: JsObject): Future[Boolean] = {
@@ -91,12 +95,15 @@ class Store @Inject()(configuration: Configuration) {
     val dtParser = ISODateTimeFormat.dateTimeNoMillis()
     
     val deviceId = (json \ "deviceId").as[String]
+    val unit = ("Pa" :: "milliC" :: Nil).find(u => json.keys.contains(u)).getOrElse("unknown")
     val date = dtParser.parseDateTime((json \ "date").as[String])
                  .withZone(suomiZone)
-    redis.hset(
-        s"measurementDetails-$deviceId-${date.getYear}-${date.getMonthOfYear}",
-        dtParser.print(date), 
+    redis.hset(createKey(unit, deviceId, date),
+        dtParser.print(date),
         json.toString())
   }
+  
+  private def createKey(unit: String, deviceId: String, date: DateTime): String = 
+    s"measurementDetails-$unit-$deviceId-${date.getYear}-${date.getMonthOfYear}"
   
 }
