@@ -23,7 +23,7 @@ case class Measurement(date: DateTime, deviceId: String, value: Int, measurement
       Json.obj("milliC" -> value)
     } else if (measurementType == MeasurementSource.PRESSURE) {
       Json.obj("Pa" -> value)
-    } else Json.obj()
+    } else Json.obj() 
     part1 ++ part2
   }
 }

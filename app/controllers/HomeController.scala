@@ -10,6 +10,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import jchart.ChartData
 import org.joda.time.DateTime
+import java.io.File
+import scala.io.Source
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -35,7 +37,7 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
     }
   }
   
-  def postMeasurements() = Action.async { implicit request: Request[AnyContent] =>
+  def measurements() = Action.async { implicit request: Request[AnyContent] =>
     val jsonOpt = request.body.asJson
     jsonOpt.map { json => 
       val array = json.as[JsArray]
@@ -44,6 +46,17 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
       }
     }
     .getOrElse(Future.successful(BadRequest(Json.obj("reason" -> "No JSON array in body."))))
+  }
+  
+  /**
+   * POST maximum size is pretty limited. This allows reading test data in quickly.
+   */
+  def readMeasurementsFromDisk() = Action.async { implicit request: Request[AnyContent] =>
+    val measurementSource = Source.fromFile("/tmp/measurements.json", "UTF-8")
+    val array = Json.parse(measurementSource.mkString).as[JsArray]
+    store.storeMeasurements(array).map { _ =>
+      Ok(Json.obj("count" -> array.value.size))
+    }
   }
   
   /**

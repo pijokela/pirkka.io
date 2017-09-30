@@ -7,9 +7,11 @@
 GET     /                           controllers.HomeController.index
 
 + nocsrf
-POST	/api/measurements			controllers.HomeController.postMeasurements()
+POST	/api/measurements			controllers.HomeController.measurements()
++ nocsrf
+POST    /api/readMeasurementsFromDisk	controllers.HomeController.readMeasurementsFromDisk()
 
-GET		/api/measurements			controllers.HomeController.measurements()
+GET		/api/measurements			controllers.HomeController.status()
 GET		/api/chartData   			controllers.HomeController.data(type: Option[String], time: Option[String], grouping: Option[String])
 
 # Map static resources from the /public folder to the /assets URL path
