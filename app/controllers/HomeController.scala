@@ -27,8 +27,12 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
    * will be called when the application receives a `GET` request with
    * a path of `/`.
    */
-  def index() = Action { implicit request: Request[AnyContent] =>
+  def indexPage() = Action { implicit request: Request[AnyContent] =>
     Ok(views.html.index())
+  }
+  
+  def temperaturePage() = Action { implicit request: Request[AnyContent] =>
+    Ok(views.html.temperature.index())
   }
   
   /**

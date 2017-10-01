@@ -4,7 +4,8 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET     /                           controllers.HomeController.index
+GET     /                           controllers.HomeController.indexPage
+GET     /temperature                controllers.HomeController.temperaturePage
 
 + nocsrf
 POST	/api/measurements			controllers.HomeController.measurements()

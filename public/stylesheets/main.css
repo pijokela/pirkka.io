@@ -6,6 +6,7 @@ body {
 	background-color: black;
 	color: #ccc;
 	font-family: sans-serif;
+	line-height: 150%;
 }
 
 a.selected {
@@ -14,15 +15,19 @@ a.selected {
 }
 
 a {
-	color: #eee;
+	color: #8cf;
 	text-decoration: none;
 }
 
 a:VISITED {
-	color: #ccc;
+	color: #7ac;
 }
 
 a:HOVER {
 	color: #fff;
 	text-decoration: underline;
+}
+
+ul {
+	list-style: outside circle;
 }
