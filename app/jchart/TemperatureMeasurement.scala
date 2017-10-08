@@ -1,4 +1,4 @@
-package temperature
+package jchart
 
 import org.joda.time.DateTime
 import play.api.libs.json.JsValue

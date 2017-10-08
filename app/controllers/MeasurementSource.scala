@@ -4,7 +4,8 @@ import org.joda.time.DateTime
 import scala.concurrent.Future
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import temperature.TemperatureMeasurement
+import jchart.TemperatureMeasurement
+import jchart.Label
 
 object MeasurementSource {
   type Type = String
@@ -26,6 +27,9 @@ case class Measurement(date: DateTime, deviceId: String, value: Int, measurement
     } else Json.obj() 
     part1 ++ part2
   }
+  
+  def findClosest(labelGroup: List[Label]): Label = 
+    labelGroup.map(l => l.distance(this) -> l).sortWith((p1, p2) => p1._1 < p2._1).head._2
 }
 
 object Measurement {

@@ -1,11 +1,10 @@
-package pressure
+package jchart
 
 import org.joda.time.DateTime
 import play.api.libs.json.JsValue
 import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json.Json
 import play.api.libs.json.JsObject
-import temperature.TemperatureMeasurement
 import controllers.Measurement
 import controllers.MeasurementSource
 

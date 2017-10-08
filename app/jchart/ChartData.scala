@@ -1,19 +1,18 @@
 package jchart
 
-import temperature.TemperatureMeasurement
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsString
 import play.api.libs.json.JsNumber
 import org.joda.time.DateTime
-import temperature.TemperatureMeasurement
 import play.api.Logger
 import java.util.Random
 import play.api.Configuration
 import com.google.inject.Inject
 import scala.annotation.tailrec
 import controllers.Measurement
+import com.typesafe.config.Config
 
 class ChartData @Inject()(val configuration: Configuration) {
   
@@ -169,24 +168,31 @@ case object DailyGrouping extends Grouping {
 
 case class Label(label: String, pointInTime: DateTime) {
   def date : DateTime = pointInTime.withMillisOfDay(0)
+  def distance(measurement: Measurement): Long = 
+    Math.abs(pointInTime.getMillis - measurement.date.getMillis)
+    
+  def bestMatch(measurements: Seq[Measurement]): Option[Measurement] =
+    measurements.sortWith((m1, m2) => distance(m1) < distance(m2)).headOption
 }
 
 object Labels {
   
-  @tailrec
-  def findDataFor(labels: List[Label], data: Seq[Measurement], result: List[Measurement] = Nil): List[Measurement] = {
+  private def closest(labels: List[Label], measurement: Measurement): Label = 
+    (labels.map(l => l.distance(measurement)) zip labels).sortWith((p1, p2) => p1._1 < p2._1).head._2
+  
+  def findDataFor(labels: List[Label], data: Seq[Measurement]): List[Measurement] = {
+    if (data.isEmpty)
+      return Nil
+    
     Logger.info("Finding from data: " + data.size)
-    labels.headOption match {
-      case None => result
-      case Some(Label(_, time)) => {
-        val nextAndRest = data.dropWhile { d => d.date.isBefore(time) }
-        Logger.info("Dropping to: " + nextAndRest.size)
-        if (nextAndRest.isEmpty)
-          result
-        else 
-          findDataFor(labels.tail, nextAndRest.tail, nextAndRest.head :: result)
-      }
-    }
+    val labelMeasurementMap = data
+      .groupBy(_.findClosest(labels))
+      .toList
+      .map { case (l, mList) => (l, l.bestMatch(mList)) }
+      .toMap
+      .withDefaultValue(None)
+    
+    return labels.map(l => labelMeasurementMap(l).getOrElse(data.head.copy(date = l.pointInTime, value = 0)))
   }
   
   def forTimeAndGrouping(grouping: Grouping, start: DateTime, end: DateTime): List[Label] = {
