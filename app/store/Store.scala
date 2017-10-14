@@ -64,6 +64,17 @@ class Store @Inject()(configuration: Configuration) {
       .map(_ => deviceIds.toList)
   }
   
+  def latestResultsByDevice: Future[List[(String, Option[DateTime])]] = {
+    val now = new DateTime()
+    uniqueDeviceIds.flatMap { deviceIds =>
+      sequence(deviceIds.map { deviceId =>
+        deviceMeasurementsForMonth("milliC", deviceId, now.getYear, now.getMonthOfYear) map { measurements =>
+          deviceId -> measurements.map(json => Measurement(json).date).sortWith((d1, d2) => d1 isBefore d2).lastOption
+        }
+      })
+    }
+  }
+  
   /**
    * @return The device ids found from the array.
    */

@@ -13,6 +13,7 @@ POST	/api/measurements			controllers.HomeController.measurements()
 POST    /api/readMeasurementsFromDisk	controllers.HomeController.readMeasurementsFromDisk()
 
 GET		/api/measurements			controllers.HomeController.status()
+GET		/api/status		        	controllers.HomeController.status()
 GET		/api/chartData   			controllers.HomeController.data(type: Option[String], time: Option[String], grouping: Option[String])
 
 # Map static resources from the /public folder to the /assets URL path

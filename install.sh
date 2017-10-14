@@ -1,13 +1,25 @@
 #! /bin/bash
 
+SERVICE=pirkka-io
+APPNAME=pirkka.io
+APPNAME_PACKAGE=${SERVICE}-1.0-SNAPSHOT
+TARGET_USER=ubuntu
+TARGET_SERVER=ubuntu@pirkka.io
+
 sbt dist
-ssh ubuntu@pirkka.io sudo rm -rf /tmp/pirkka-io-1.0-SNAPSHOT.zip
-scp target/universal/pirkka-io-1.0-SNAPSHOT.zip ubuntu@pirkka.io:/tmp/
+rm -rf /tmp/${APPNAME_PACKAGE}
+mv target/universal/${APPNAME_PACKAGE}.zip /tmp/
+unzip /tmp/${APPNAME_PACKAGE}.zip -d /tmp/
+rsync -avz --delete /tmp/${APPNAME_PACKAGE} ${TARGET_SERVER}:/tmp/
 
-ssh ubuntu@pirkka.io sudo rm -rf /opt/pirkka.io
-ssh ubuntu@pirkka.io sudo rm -rf /opt/pirkka-io-1.0-SNAPSHOT
-ssh ubuntu@pirkka.io sudo unzip /tmp/pirkka-io-1.0-SNAPSHOT.zip -d /opt/
-ssh ubuntu@pirkka.io sudo chown -R ubuntu:ubuntu /opt/pirkka-io-1.0-SNAPSHOT
-ssh ubuntu@pirkka.io sudo ln -s /opt/pirkka-io-1.0-SNAPSHOT /opt/pirkka.io
+ssh ${TARGET_SERVER} sudo rm -rf /opt/${APPNAME}
+ssh ${TARGET_SERVER} sudo rm -rf /opt/${APPNAME_PACKAGE}
+ssh ${TARGET_SERVER} sudo cp -a /tmp/${APPNAME_PACKAGE} /opt/${APPNAME_PACKAGE}
+ssh ${TARGET_SERVER} sudo chown -R ${TARGET_USER}:${TARGET_USER} /opt/${APPNAME_PACKAGE}
+ssh ${TARGET_SERVER} sudo ln -s /opt/${APPNAME_PACKAGE} /opt/${APPNAME}
 
-ssh ubuntu@pirkka.io sudo systemctl restart pirkka-io
+# UPSTART:
+# ssh ${TARGET_SERVER} sudo restart ${SERVICE}
+
+# SYSTEMD:
+ssh ${TARGET_SERVER} sudo systemctl restart ${SERVICE}

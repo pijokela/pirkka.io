@@ -18,7 +18,7 @@ import scala.io.Source
  * application's home page.
  */
 @Singleton
-class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData: ChartData) extends AbstractController(cc) {
+class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData: ChartData, RestApiAction: RestAuth) extends AbstractController(cc) {
 
   /**
    * Create an Action to render an HTML page.
@@ -41,16 +41,26 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
   def status() = Action.async { implicit request: Request[AnyContent] =>
     val deviceIdsF = store.uniqueDeviceIds
     val keysF = store.countKeys
+    val latestDataF = store.latestResultsByDevice
     
     for(deviceIds <- deviceIdsF;
-        keys <- keysF) yield {
+        keys <- keysF;
+        latestData <- latestDataF) yield {
+      val latestDataJson = latestData.map { case (deviceId, optDate) => 
+        Json.obj(
+            "deviceId" -> deviceId, 
+            "date" -> optDate.map(_.toString)
+        )
+      }
+      
       Ok(Json.obj(
           "keys" -> keys,
-          "deviceIds" -> Json.arr(deviceIds)))
+          "deviceIds" -> Json.arr(deviceIds),
+          "latestData" -> Json.arr(latestDataJson)))
     }
   }
   
-  def measurements() = Action.async { implicit request: Request[AnyContent] =>
+  def measurements(): Action[AnyContent] = RestApiAction.async { implicit request: Request[AnyContent] =>
     val jsonOpt = request.body.asJson
     jsonOpt.map { json => 
       val array = json.as[JsArray]
@@ -100,4 +110,15 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
       Ok(data)
     }
   }
+}
+
+case class Logging[A](action: Action[A]) extends Action[A] {
+
+  def apply(request: Request[A]): Future[Result] = {
+    Logger.info("Calling action")
+    action(request)
+  }
+
+  override def parser = action.parser
+  override def executionContext = action.executionContext
 }
