@@ -99,7 +99,7 @@ class ChartData @Inject()(val configuration: Configuration) {
       val meanValue = temperatures.sum / temperatures.length.asInstanceOf[Double]
       val datasetDataArray = JsArray(temperatures.map(JsNumber(_)))
       
-      val deviceLabel = configuration.get[Option[String]](s"deviceId.$deviceId.label").getOrElse(deviceId)
+      val deviceLabel = configuration.getOptional[String](s"deviceId.$deviceId.label").getOrElse(deviceId)
       val json = Json.obj(
         "label" -> deviceLabel,
         "backgroundColor" -> color(index, 0.2),
