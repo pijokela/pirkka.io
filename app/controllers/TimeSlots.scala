@@ -9,6 +9,8 @@ import java.sql.Timestamp
  */
 object TimeSlots {
   
+  val logger = Logger("timeslots")
+  
   val times = "previous24h" :: "yesterday" :: "rollingWeek" :: "rolling30days" :: Nil
   
   def getStartAndEnd(time: String, now: DateTime): (DateTime, DateTime) = {
@@ -21,7 +23,7 @@ object TimeSlots {
       case "rollingWeek" => (now.minusWeeks(1), now)
       case "rolling30days" => (now.minusDays(30), now)
       case _ => {
-        Logger.info("Unknown time: " + time) 
+        logger.info("Unknown time: " + time) 
         (now.minusDays(1), now)
       }
     }

@@ -20,6 +20,8 @@ import scala.io.Source
 @Singleton
 class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData: ChartData, RestApiAction: RestAuth) extends AbstractController(cc) {
 
+  val logger = Logger("home-controller")
+  
   /**
    * Create an Action to render an HTML page.
    *
@@ -89,11 +91,11 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
     val validType = `type`.getOrElse("temperature")
     val validTime = time.getOrElse(TimeSlots.times.head)
     val validGrouping = chartData.selectGroupingForTime(validTime)
-    Logger.info("Got time: " + time + " --> " + validTime)
+    logger.info("Got time: " + time + " --> " + validTime)
     
     val now = DateTime.now()
     val (start, end) = TimeSlots.getStartAndEnd(validTime, now)
-    Logger.info("Got start and end: " + start + " " + end)
+    logger.info("Got start and end: " + start + " " + end)
     
     val resultsF = validType match {
       case "pressure" => store.listMeasurements("Pa", start, end)
@@ -101,7 +103,7 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
     }
     
     resultsF.map { temperatures => 
-      Logger.info("Got data: " + temperatures.size)
+      logger.info("Got data: " + temperatures.size)
       val groupedTemps = temperatures.groupBy { t => t.deviceId }.toList
       val data = validTime match {
         case "rolling30days" => chartData.dailyMinsAndMaxes(start, end, groupedTemps)
@@ -114,8 +116,10 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
 
 case class Logging[A](action: Action[A]) extends Action[A] {
 
+  val logger = Logger("home-controller-logging")
+  
   def apply(request: Request[A]): Future[Result] = {
-    Logger.info("Calling action")
+    logger.info("Calling action")
     action(request)
   }
 

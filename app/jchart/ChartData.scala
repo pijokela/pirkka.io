@@ -43,7 +43,6 @@ class ChartData @Inject()(val configuration: Configuration) {
   
   def dailyMinsAndMaxes(start: DateTime, end: DateTime, data : Seq[(String, Seq[Measurement])]): JsObject = {
     val labels = Labels.forTimeAndGrouping(DailyGrouping, start, end)
-    // Logger.info(s"Finding mins and maxes $labels from data.size: ${data.size} and data.head._2.size: ${data.head._2.size}")
     val groupedData = data.flatMap { case (deviceId, data) => 
       (deviceId + ".max", findDailyMaximums(data).map(_._2)) ::
       (deviceId + ".min", findDailyMinimums(data).map(_._2)) :: Nil
@@ -53,7 +52,6 @@ class ChartData @Inject()(val configuration: Configuration) {
     // Filter labels that do not have data in the first dataset:
     val labelsWithData = labels.filter { l => dataDates.contains(l.date) }
     
-    // Logger.info(s"Found ${labelsWithData.size} labels and ${groupedData.head._2.size} data points.")
     createJsonFromDataByDevice(labelsWithData.map(_.label), groupedData)
   }
   
@@ -63,7 +61,6 @@ class ChartData @Inject()(val configuration: Configuration) {
                        grouping: Grouping): JsObject = 
   {
     val labels = Labels.forTimeAndGrouping(grouping, start, end)
-    // Logger.info(s"Grouping is ${grouping.name} --> $labels from data.size: ${data.size}")
     val groupedData = data.flatMap { case (deviceId, data) => 
       Labels.findDataFor(labels, data)
     }
@@ -105,9 +102,6 @@ class ChartData @Inject()(val configuration: Configuration) {
         "backgroundColor" -> color(index, 0.2),
         "borderColor" -> color(index, 1),
         "pointColor" -> color(index, 1),
-        //"pointStrokeColor" -> "#fff",
-        //"pointHighlightFill" -> "#fff",
-        //"pointHighlightStroke" -> color(index, 1),
         "data" -> datasetDataArray
       )
       nextIndex()
@@ -176,7 +170,9 @@ case class Label(label: String, pointInTime: DateTime) {
 }
 
 object Labels {
-  
+
+  val logger = Logger("jchart-labels")
+
   private def closest(labels: List[Label], measurement: Measurement): Label = 
     (labels.map(l => l.distance(measurement)) zip labels).sortWith((p1, p2) => p1._1 < p2._1).head._2
   
@@ -184,7 +180,7 @@ object Labels {
     if (data.isEmpty)
       return Nil
     
-    Logger.info("Finding from data: " + data.size)
+    logger.info("Finding from data: " + data.size)
     val labelMeasurementMap = data
       .groupBy(_.findClosest(labels))
       .toList
@@ -196,12 +192,12 @@ object Labels {
   }
   
   def forTimeAndGrouping(grouping: Grouping, start: DateTime, end: DateTime): List[Label] = {
-    Logger.info("Starting to find labels: " + grouping + " start: " + start + " end: " + end)
+    logger.info("Starting to find labels: " + grouping + " start: " + start + " end: " + end)
     @tailrec
     def groupTimes(from: DateTime, toList: List[DateTime]): List[DateTime] = if (from.isEqual(end) || from.isAfter(end)) {
       toList
     } else {
-      Logger.info("Finding labels: " + from + " --> " + toList.size)
+      logger.info("Finding labels: " + from + " --> " + toList.size)
       groupTimes(grouping.timeAfter(from), from :: toList)
     }
     
