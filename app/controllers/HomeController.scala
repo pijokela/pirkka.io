@@ -12,6 +12,8 @@ import jchart.ChartData
 import org.joda.time.DateTime
 import java.io.File
 import scala.io.Source
+import java.nio.file.Paths
+import image.RoundedImages
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -35,6 +37,34 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
   
   def temperaturePage() = Action { implicit request: Request[AnyContent] =>
     Ok(views.html.temperature.index())
+  }
+  
+  def iconFormPage() = Action { implicit request: Request[AnyContent] =>
+    Ok(views.html.icon.index())
+  }
+  
+  def createIconFromForm() = Action.async(parse.multipartFormData) { request =>
+    request.body
+      .file("picture")
+      .map { picture =>
+        // only get the last part of the filename
+        // otherwise someone can send a path like ../../home/foo/bar.txt to write to other files on the system
+        val filename    = Paths.get(picture.filename).getFileName
+        val fileSize    = picture.fileSize
+        val contentType = picture.contentType
+        
+        if (fileSize > 10000000)
+          Future.successful(BadRequest("File must be under 10MB."))
+  
+        //picture.ref.copyTo(Paths.get(s"/tmp/picture/$filename"), replace = true)
+        val ref = picture.ref
+        
+        val futureBytes = RoundedImages.multipartFormdataToIcon(picture.ref)
+        futureBytes.map(Ok(_).as("image/png").withHeaders("Content-Disposition" -> "attachment; filename=\"rounded-icon.png\""))
+      }
+      .getOrElse {
+        Future.successful(Redirect(routes.HomeController.iconFormPage).flashing("error" -> "Missing file"))
+      }
   }
   
   /**

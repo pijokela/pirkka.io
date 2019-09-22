@@ -6,6 +6,8 @@
 # An example controller showing a sample home page
 GET     /                           controllers.HomeController.indexPage
 GET     /temperature                controllers.HomeController.temperaturePage
+GET     /icon                       controllers.HomeController.iconFormPage
+POST    /create-icon                controllers.HomeController.createIconFromForm()
 
 + nocsrf
 POST	/api/measurements			controllers.HomeController.measurements()

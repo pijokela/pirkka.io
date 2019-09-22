@@ -1,0 +1,21 @@
+@()(implicit request: RequestHeader)
+@import helper._
+
+@main() {
+
+	<h1>Create a rounded icon</h1>
+	<div id="messages"></div>
+	<div class="links">
+		<a href="/">pirkka.io</a>
+	</div>
+	<div class="content">
+		<h2>Upload an image to create an icon</h2>
+		
+		@helper.form(action = CSRF(routes.HomeController.createIconFromForm), 'enctype -> "multipart/form-data") {
+		    <input type="file" name="picture">
+		    <p>
+		        <input type="submit">
+		    </p>
+		}
+	</div>
+}
