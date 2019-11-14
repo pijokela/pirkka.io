@@ -14,6 +14,7 @@ import java.io.File
 import scala.io.Source
 import java.nio.file.Paths
 import image.RoundedImages
+import java.time.LocalDateTime
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -33,6 +34,12 @@ class HomeController @Inject()(cc: ControllerComponents, store: Store, chartData
    */
   def indexPage() = Action { implicit request: Request[AnyContent] =>
     Ok(views.html.index())
+  }
+  
+  def hsRedirect() = Action { implicit request: Request[AnyContent] =>
+    val today = LocalDateTime.now()
+    val formatter = java.time.format.DateTimeFormatter.ofPattern("ddMMyyyy")
+    TemporaryRedirect(s"https://www.hs.fi/paivanlehti/${formatter.format(today)}/")
   }
   
   def temperaturePage() = Action { implicit request: Request[AnyContent] =>
